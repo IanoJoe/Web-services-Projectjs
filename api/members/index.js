@@ -1,7 +1,7 @@
 var datastore = require('./datastore');
 
 var MongoClient = require('mongodb').MongoClient;
-var ObjectId = require('mongodb').ObjectID;
+var ObjectId = require('mongodb').ObjectId;
 var assert = require('assert');
 var config = require('../../config');
 
@@ -64,7 +64,7 @@ exports.update = function(req, res) {
   console.log('Updating member: ' + id);
   console.log(JSON.stringify(member));
   var collection = mongoDb.collection('members');
-  collection.update({'_id':new mongo.ObjectID(id)}, member, {safe:true}, function(err, result) {
+  collection.update({'_id':ObjectId(id)}, member, {safe:true}, function(err, result) {
           if (err) {
               console.log('Error updating member: ' + err);
               res.send({'error':'An error has occurred'});
@@ -82,7 +82,7 @@ exports.delete = function(req, res) {
   var id = req.params.id;
   console.log('Deleting member: ' + id);
   var collection = mongoDb.collection('members');
-  collection.remove({'_id':new mongo.ObjectID(id)}, {safe:true},     function(err, result) {
+  collection.deleteOne({'_id':ObjectId(id)}, {safe:true},     function(err, result) {
       if (err) {
           res.send({'error':'An error has occurred - ' + err});
       } else {
@@ -92,5 +92,24 @@ exports.delete = function(req, res) {
   })
 
 };
+
+// find an existing member id in datastore.
+exports.find = function(req, res) {
+
+  var id = req.params.id;
+  console.log('Finding member: ' + id);
+  var collection = mongoDb.collection('members');
+  collection.findOne({'_id':ObjectId(id)}, {safe:true},     function(err, result) {
+      if (err) {
+          res.send({'error':'An error has occurred - ' + err});
+      } else {
+          console.log('' + result + ' document(s) is found');
+          res.send(req.body);
+      }
+  })
+
+};
+
+ 
 
  
