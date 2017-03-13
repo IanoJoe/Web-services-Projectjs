@@ -1,4 +1,4 @@
 module.exports = {
   'secret': 'dontsendjacktothemarket',
-  'database': 'mongodb://Iano:mdbdev@ds119370.mlab.com:19370/members_db'
+  'database': 'mongodb://test:ewd15@<YOUR_DOMAIN>.mongolab.com:39311/your_db'
 };
