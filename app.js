@@ -11,8 +11,8 @@ var mongo = require('mongodb');
 var morgan      = require('morgan');
 var mongoose    = require('mongoose');
 var passport  = require('passport');
-var config      = require('./config/database'); // get db config file
-var User        = require('./models/user'); // get the mongoose model
+var config      = require('./config/database'); 
+var User        = require('./models/user'); 
 var jwt         = require('jwt-simple');
 var csp = require('helmet-csp');
 var http=require('http');
@@ -337,7 +337,7 @@ app.get('/api/members',member.index);
 app.post('/api/members',member.create);
 app.put('/api/members/:id',member.update);
 app.delete('/api/members/:id',member.delete);
-
+app.get('/api/members/:id',member.find);
 // Listen on port 8000, IP defaults to 127.0.0.1
 app.listen(8000)
 // Put a friendly message on the terminal
