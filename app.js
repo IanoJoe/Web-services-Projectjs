@@ -17,6 +17,26 @@ var jwt         = require('jwt-simple');
 var csp = require('helmet-csp');
 var http=require('http');
 
+
+var LruMap = require("collections/lru-map");
+
+var fs = require('fs'); 
+var https = require('https'); 
+var options = { 
+    key: fs.readFileSync('server-key.pem'), 
+    //cert: fs.readFileSync('server-cert.pem'), 
+    ca: fs.readFileSync('ca-crt.pem'), 
+}; 
+https.createServer(options, function (req, res) { 
+    console.log(new Date()+' '+ 
+        req.connection.remoteAddress+' '+ 
+        req.method+' '+req.url); 
+    res.writeHead(200); 
+    res.end("app\n"); 
+}).listen(4433);
+
+
+
 var port        = process.env.PORT || 8000;
 //create an express app
 var app = express();
@@ -42,6 +62,33 @@ app.use(csp({
     reportUri: '/report-violation',
   }
 }))
+
+var mcache = require('memory-cache');
+
+var cache = (duration) => {
+  return (req, res, next) => {
+    let key = '__express__' + req.originalUrl || req.url
+    let cachedBody = mcache.get(key)
+    if (cachedBody) {
+      res.send(cachedBody)
+      return
+    } else {
+      res.sendResponse = res.send
+      res.send = (body) => {
+        mcache.put(key, body, duration * 1000);
+        res.sendResponse(body)
+      }
+      next()
+    }
+  }
+}
+
+app.get('/', cache(10), (req, res) => {
+  setTimeout(() => {
+    res.render('index', { title: 'Hey', message: 'Hello there', date: new Date()})
+  }, 8080) //setTimeout was used to simulate a slow processing request
+})
+
 
 app.post('/report-violation', function (req, res) {
   if (req.body) {
@@ -163,6 +210,43 @@ apiRoutes.post('/authenticate',urlencodedParser, function(req, res) {
 });
 
  
+// route to authenticate a user (POST http://localhost:8000/api/authenticate)
+// ...
+ 
+// route to a restricted info (GET http://localhost:8000/api/memberinfo)
+apiRoutes.get('/memberinfo', passport.authenticate('jwt', { session: false}), function(req, res) {
+  var token = getToken(req.headers);
+  if (token) {
+    var decoded = jwt.decode(token, config.secret);
+    User.findOne({
+      name: decoded.name
+    }, function(err, user) {
+        if (err) throw err;
+ 
+        if (!user) {
+          return res.status(403).send({success: false, msg: 'Authentication failed. User not found.'});
+        } else {
+          res.json({success: true, msg: 'Welcome in the member area ' + user.name + '!'});
+        }
+    });
+  } else {
+    return res.status(403).send({success: false, msg: 'No token provided.'});
+  }
+});
+ 
+getToken = function (headers) {
+  if (headers && headers.authorization) {
+    var parted = headers.authorization.split(' ');
+    if (parted.length === 2) {
+      return parted[1];
+    } else {
+      return null;
+    }
+  } else {
+    return null;
+  }
+};
+
 // connect the api routes under /api/*
 app.use('/api', apiRoutes);
 
@@ -177,8 +261,8 @@ var member = require('./api/members/index');
 //var member = require('./api/members/display');
 
 
-var housekeeping = require('./housekeeping.js');
-app.use(require('cookie-parser')(housekeeping.cookieSecret));
+var credentials = require('./credentials.js');
+app.use(require('cookie-parser')(credentials.cookieSecret));
 
 
 
@@ -186,7 +270,7 @@ app.use(require('cookie-parser')(housekeeping.cookieSecret));
 app.get('/', function(req, res){
  
   // Set the key and value as well as expiration
-  res.cookie('username', 'IanLordan', {expire : new Date() + 9999}).send('username has the value of : IanLordan');
+  res.cookie('username', 'John Smith', {expire : new Date() + 9999}).send('username has the value of : John Smith');
 });
  
 // Show stored cookies in the console
@@ -222,7 +306,7 @@ app.use(session({
   saveUninitialized: true,
  
   // The secret string used to sign the session id cookie
-  secret: housekeeping.cookieSecret,
+  secret: credentials.cookieSecret,
 }));
 
 // This is another example of middleware.
