@@ -39,4 +39,22 @@ Install npm packages not on your machine
 Swap the Database Mlab details for your own  
 ----------------------------------------------------------------------
 Security features are helmet, CSP, Cookies, Authentication 
+
+Update below for assingment two
+**************************************************************************************************************************************
+
+ASSINGMENT TWO UPDATE fROM SLIDES
+JWT authentication using passport 
+Mocha testing of create & add a member
+NEDB JavaScript SQLite alternative, using it to track when changes are made to code and time and location of last execution of code
+Created & imported SSL Certificates for HTTPS
+Memory caching around get method
+Mongoose schema
+
+
+
+
+
+
+
  
